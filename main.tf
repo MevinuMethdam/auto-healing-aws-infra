@@ -190,16 +190,29 @@ resource "aws_lambda_function" "auto_healer" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "cpu_high" {
-  alarm_name          = "AutoHealing-High-CPU-Alarm"
-  comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods  = "1"
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/EC2"
-  period              = "60"
-  statistic           = "Average"
-  threshold           = "80"
+  alarm_name                = "AutoHealing-Anomaly-Alarm"
+  comparison_operator       = "LessThanLowerOrGreaterThanUpperThreshold"
+  evaluation_periods        = "2"
+  threshold_metric_id       = "ad1"
 
-  dimensions          = { AutoScalingGroupName = aws_autoscaling_group.app_asg.name }
+  metric_query {
+    id          = "ad1"
+    expression  = "ANOMALY_DETECTION_BAND(m1, 2)"
+    label       = "CPU Utilization (Anomaly Detection)"
+    return_data = "true"
+  }
+
+  metric_query {
+    id          = "m1"
+    return_data = "true"
+    metric {
+      metric_name = "CPUUtilization"
+      namespace   = "AWS/EC2"
+      period      = "60"
+      stat        = "Average"
+      dimensions  = { AutoScalingGroupName = aws_autoscaling_group.app_asg.name }
+    }
+  }
 }
 
 resource "aws_cloudwatch_event_rule" "alarm_rule" {
@@ -207,7 +220,7 @@ resource "aws_cloudwatch_event_rule" "alarm_rule" {
   event_pattern = jsonencode({
     source      = ["aws.cloudwatch"]
     "detail-type" = ["CloudWatch Alarm State Change"]
-    detail      = { alarmName = ["AutoHealing-High-CPU-Alarm"], state = { value = ["ALARM"] } }
+    detail      = { alarmName = ["AutoHealing-Anomaly-Alarm"], state = { value = ["ALARM"] } }
   })
 }
 
