@@ -119,7 +119,6 @@ resource "aws_instance" "monitoring_server" {
               EOF
 }
 
-#
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_file = "heal.py"
@@ -134,9 +133,24 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_ssm_access" {
+resource "aws_iam_policy" "lambda_ssm_policy" {
+  name        = "LambdaSSMCommandPolicy"
+  description = "Allow Lambda to send commands via SSM only"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = "ssm:SendCommand"
+        Effect   = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_ssm_attachment" {
   role       = aws_iam_role.lambda_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
+  policy_arn = aws_iam_policy.lambda_ssm_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {

@@ -4,7 +4,6 @@ import json
 
 def lambda_handler(event, context):
     ssm = boto3.client('ssm')
-
     instance_id = os.environ.get('INSTANCE_ID')
 
     if not instance_id:
@@ -13,15 +12,21 @@ def lambda_handler(event, context):
             'body': json.dumps('Instance ID not found in environment variables')
         }
 
-    print(f"High CPU detected on {instance_id}. Initiating auto-healing...")
+    print(f"Alert detected on {instance_id}. Initiating auto-healing...")
+
+
+    commands = [
+        'killall stress',
+        'rm -f /tmp/dummy_large_file'
+    ]
 
     try:
         response = ssm.send_command(
             InstanceIds=[instance_id],
             DocumentName="AWS-RunShellScript",
-            Parameters={'commands': ['killall stress']}
+            Parameters={'commands': commands}
         )
-        print("Healing command sent successfully!")
+        print("Healing commands sent successfully!")
 
         return {
             'statusCode': 200,
