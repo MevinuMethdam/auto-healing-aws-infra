@@ -103,20 +103,40 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-resource "aws_instance" "monitoring_server" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = "t3.micro"
-  subnet_id                   = aws_subnet.public_subnet.id
-  vpc_security_group_ids      = [aws_security_group.server_sg.id]
-  iam_instance_profile        = aws_iam_instance_profile.ec2_profile.name
-  associate_public_ip_address = true
-  user_data = <<-EOF
+resource "aws_launch_template" "app_template" {
+  name_prefix   = "auto-healing-template"
+  image_id      = data.aws_ami.ubuntu.id
+  instance_type = "t3.micro"
+
+  network_interfaces {
+    associate_public_ip_address = true
+    security_groups             = [aws_security_group.server_sg.id]
+  }
+
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ec2_profile.name
+  }
+
+  user_data = base64encode(<<-EOF
               #!/bin/bash
               apt-get update -y
               wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
               dpkg -i -E ./amazon-cloudwatch-agent.deb
               apt-get install stress -y
               EOF
+  )
+}
+
+resource "aws_autoscaling_group" "app_asg" {
+  vpc_zone_identifier = [aws_subnet.public_subnet.id]
+  desired_capacity    = 1
+  max_size            = 2
+  min_size            = 1
+
+  launch_template {
+    id      = aws_launch_template.app_template.id
+    version = "$Latest"
+  }
 }
 
 data "archive_file" "lambda_zip" {
@@ -165,7 +185,7 @@ resource "aws_lambda_function" "auto_healer" {
   handler       = "heal.lambda_handler"
   runtime       = "python3.9"
   environment {
-    variables = { INSTANCE_ID = aws_instance.monitoring_server.id }
+    variables = { INSTANCE_ID = "asg-monitoring-server" }
   }
 }
 
@@ -178,7 +198,8 @@ resource "aws_cloudwatch_metric_alarm" "cpu_high" {
   period              = "60"
   statistic           = "Average"
   threshold           = "80"
-  dimensions          = { InstanceId = aws_instance.monitoring_server.id }
+
+  dimensions          = { AutoScalingGroupName = aws_autoscaling_group.app_asg.name }
 }
 
 resource "aws_cloudwatch_event_rule" "alarm_rule" {
