@@ -51,6 +51,7 @@ resource "aws_route_table_association" "public_assoc" {
 resource "aws_security_group" "server_sg" {
   name   = "auto-healing-sg"
   vpc_id = aws_vpc.auto_healing_vpc.id
+
   ingress {
     from_port   = 22
     to_port     = 22
@@ -63,6 +64,14 @@ resource "aws_security_group" "server_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  # මෙය Drift පරීක්ෂාව සඳහා එකතු කළ රූල් එකයි
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
