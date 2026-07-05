@@ -15,3 +15,11 @@
 *.tfstate.*
 .terraform/
 .terraform.lock.hcl
+
+# Terraform Files
+*.tfstate
+*.tfstate.*
+*.backup
+.terraform/
+.terraform.lock.hcl
+tfplan
