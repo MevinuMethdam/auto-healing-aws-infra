@@ -1,22 +1,24 @@
 # Chaos Engineering & Self-Healing SRE Pipeline
 
-This project demonstrates a production-grade, cloud-native infrastructure featuring automated self-healing and high-availability mechanisms on AWS.
+This project is a production-ready, cloud-native infrastructure designed to minimize Mean Time to Recovery (MTTR) through autonomous self-healing and predictive monitoring. It demonstrates an end-to-end implementation of Site Reliability Engineering (SRE) principles on AWS, managed via modern CI/CD and IaC workflows.
 
 ## Tech Stack & Tools
 
-* **Infrastructure as Code (IaC):** Terraform
-* **Cloud Platform:** AWS (EC2, Auto Scaling Groups, VPC, IAM, CloudWatch, EventBridge, Lambda)
-* **Monitoring & Alerting:** CloudWatch Anomaly Detection (Predictive Monitoring)
+* **Infrastructure as Code (IaC):** Terraform (State managed via AWS S3 Backend)
+* **Cloud Infrastructure:** AWS (EC2, Auto Scaling Groups, VPC, IAM, CloudWatch, EventBridge, Lambda)
+* **Predictive Monitoring:** AWS CloudWatch Anomaly Detection (Machine Learning)
 * **Automation:** AWS Systems Manager (SSM) Run Command
 * **Resilience:** Auto Scaling Group (ASG) & Multi-AZ Deployment
 * **Security:** IAM Least Privilege Principle
+* **CI/CD Pipeline:** GitHub Actions (Automated validation, planning, and deployment)
 
 ## Key Features
 
-1. **Self-Healing Architecture:** Detects performance degradation (CPU spikes/Disk issues) via CloudWatch, triggers an EventBridge rule, and invokes a Lambda function to execute automated fixes via AWS SSM.
-2. **Predictive Monitoring:** Replaced static thresholds with AWS CloudWatch Anomaly Detection, utilizing machine learning to identify performance drifts proactively.
-3. **High Availability:** Implemented an Auto Scaling Group (ASG) across multiple Availability Zones to ensure fault tolerance and continuous service availability.
-4. **Security Best Practices:** Enforced IAM roles with minimal permissions, adhering to the principle of least privilege.
+1. **Autonomous Self-Healing Loop:** Implemented a closed-loop remediation system. Performance anomalies are detected in real-time, triggering an automated workflow to fix issues (e.g., process termination) without human intervention.
+2. **Machine Learning-Driven Monitoring:** Utilized CloudWatch Anomaly Detection to move beyond static, error-prone thresholds. The system uses ML models to learn normal performance patterns and proactively flag drifts.
+3. **Production-Grade CI/CD/IaC:** Automates infrastructure lifecycle management using GitHub Actions. Every change is validated, planned, and applied automatically, ensuring state consistency using remote S3 backends.
+4. **Resilience & Fault Tolerance:** Deployed using Auto Scaling Groups (ASG), ensuring that the system automatically maintains desired capacity and handles instance failures across Availability Zones.
+5. **Operational Security:** Enforced strict IAM role-based access control, ensuring the "Least Privilege" principle is maintained across all automation triggers.
 
 ## System Architecture
 
@@ -34,9 +36,10 @@ graph LR
 ```
 ## Workflow
 
-*   **Detection:** CloudWatch Anomaly Detection monitors CPU Utilization patterns using machine learning.
-*   **Response:** Upon an alarm state change, EventBridge redirects the event to the Auto-Healing Lambda function.
-*   **Correction:** The Lambda function utilizes AWS Systems Manager (SSM) to remotely execute remediation scripts (e.g., process termination, file cleanup) on the affected instance without manual intervention.
+*   **Detection:** AWS CloudWatch ML-based models monitor system performance patterns.
+*   **Alerting:** An anomaly triggers an alarm, and EventBridge intercepts the state change.
+*   **Remediation:** A Lambda function executes an SSM Command remotely to fix the identified issue instantly.
+*   **Consistency:** All changes are version-controlled and deployed through an automated pipeline, ensuring a single source of truth for infrastructure.
 
 ---
 *Created by **Mevinu Methdam** | SRE/DevOps Learner*
