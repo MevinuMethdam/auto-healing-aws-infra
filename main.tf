@@ -64,7 +64,7 @@ resource "aws_security_group" "server_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  # මෙය Drift පරීක්ෂාව සඳහා එකතු කළ රූල් එකයි
+
   ingress {
     from_port   = 8080
     to_port     = 8080
